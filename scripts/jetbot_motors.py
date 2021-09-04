@@ -15,18 +15,26 @@ def set_speed(motor_ID, value):
 
 	if motor_ID == 1:
 		motor = motor_left
+		ina = 1
+		inb = 0
 	elif motor_ID == 2:
 		motor = motor_right
+		ina = 2
+		inb = 3
 	else:
 		rospy.logerror('set_speed(%d, %f) -> invalid motor_ID=%d', motor_ID, value, motor_ID)
 		return
 	
 	motor.setSpeed(speed)
 
-	if value > 0:
+	if value < 0:
 		motor.run(Adafruit_MotorHAT.FORWARD)
+		motor_driver._pwm.setPWM(ina,0,0)
+		motor_driver._pwm.setPWM(inb,0,speed*16)
 	else:
 		motor.run(Adafruit_MotorHAT.BACKWARD)
+		motor_driver._pwm.setPWM(ina,0,speed*16)
+		motor_driver._pwm.setPWM(inb,0,0)
 
 
 # stops all motors
@@ -36,6 +44,11 @@ def all_stop():
 
 	motor_left.run(Adafruit_MotorHAT.RELEASE)
 	motor_right.run(Adafruit_MotorHAT.RELEASE)
+
+	motor_driver._pwm.setPWM(0,0,0)
+	motor_driver._pwm.setPWM(1,0,0)
+	motor_driver._pwm.setPWM(2,0,0)
+	motor_driver._pwm.setPWM(3,0,0)
 
 
 # directional commands (degree, speed)
