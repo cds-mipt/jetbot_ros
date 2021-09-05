@@ -50,6 +50,8 @@ bool aquireFrame()
 		return false;
 	}
 
+	ros::Time stamp = ros::Time::now();
+
 	// assure correct image size
 	if( !camera_cvt->Resize(camera->GetWidth(), camera->GetHeight(), IMAGE_RGBA32F) )
 	{
@@ -59,6 +61,8 @@ bool aquireFrame()
 
 	// populate the message
 	sensor_msgs::Image msg;
+	msg.header.frame_id = "jetbot_camera";
+	msg.header.stamp = stamp;
 
 	if( !camera_cvt->Convert(msg, imageConverter::ROSOutputFormat, imgRGBA) )
 	{
