@@ -25,6 +25,7 @@
 #include <jetson-utils/cudaColorspace.h>
 #include <jetson-utils/cudaMappedMemory.h>
 
+#include <cv_bridge/cv_bridge.h>
 
 
 static imageFormat imageFormatFromEncoding( const std::string& encoding )
@@ -185,7 +186,11 @@ bool imageConverter::Convert( sensor_msgs::Image& msg, imageFormat format, Pixel
 
 	msg.encoding     = imageFormatToEncoding(format);
 	msg.is_bigendian = false;
-	
+
+	cv_bridge::CvImagePtr image = cv_bridge::toCvCopy(msg);
+	cv::rotate(image->image, image->image, cv::ROTATE_180);
+	image->toImageMsg(msg);
+
 	return true;
 }
 
