@@ -89,8 +89,10 @@ int main(int argc, char **argv)
 	 * retrieve parameters
 	 */
 	std::string camera_device = "0";	// MIPI CSI camera by default
+	int frame_rate = 10;
 
 	private_nh.param<std::string>("device", camera_device, camera_device);
+	private_nh.param<int>("frame_rate", frame_rate, frame_rate);
 	
 	ROS_INFO("opening camera device %s", camera_device.c_str());
 
@@ -139,12 +141,14 @@ int main(int argc, char **argv)
 	/*
 	 * start publishing video frames
 	 */
+	ros::Rate rate(frame_rate);
 	while( ros::ok() )
 	{
 		//if( raw_pub->getNumSubscribers() > 0 )
 			aquireFrame();
 
 		ros::spinOnce();
+		rate.sleep();
 	}
 
 	delete camera;
