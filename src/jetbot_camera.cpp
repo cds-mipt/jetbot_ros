@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 	ros::Rate rate(frame_rate);
 	while( ros::ok() )
 	{
-		//if( raw_pub->getNumSubscribers() > 0 )
+		if( camera_pub->getNumSubscribers() > 0 )
 			aquireFrame();
 
 		ros::spinOnce();
