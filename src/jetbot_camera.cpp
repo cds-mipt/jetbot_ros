@@ -25,6 +25,8 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
 
+#include <camera_calibration_parsers/parse.h>
+
 #include <jetson-utils/gstCamera.h>
 
 #include "image_converter.h"
@@ -36,6 +38,9 @@ gstCamera* camera = NULL;
 
 imageConverter* camera_cvt = NULL;
 ros::Publisher* camera_pub = NULL;
+ros::Publisher* camera_info_pub = NULL;
+
+sensor_msgs::CameraInfo camera_info_msg;
 
 
 // aquire and publish camera frame
@@ -64,6 +69,8 @@ bool aquireFrame()
 	msg.header.frame_id = "jetbot_camera";
 	msg.header.stamp = stamp;
 
+	camera_info_msg.header = msg.header;
+
 	if( !camera_cvt->Convert(msg, imageConverter::ROSOutputFormat, imgRGBA) )
 	{
 		ROS_ERROR("failed to convert camera frame to sensor_msgs::Image");
@@ -72,6 +79,7 @@ bool aquireFrame()
 
 	// publish the message
 	camera_pub->publish(msg);
+	camera_info_pub->publish(camera_info_msg);
 	ROS_INFO("published camera frame");
 	return true;
 }
@@ -90,9 +98,11 @@ int main(int argc, char **argv)
 	 */
 	std::string camera_device = "0";	// MIPI CSI camera by default
 	int frame_rate = 10;
+	std::string camera_info_url = "";
 
 	private_nh.param<std::string>("device", camera_device, camera_device);
 	private_nh.param<int>("frame_rate", frame_rate, frame_rate);
+	private_nh.param<std::string>("camera_info_url", camera_info_url, camera_info_url);
 	
 	ROS_INFO("opening camera device %s", camera_device.c_str());
 
@@ -124,9 +134,11 @@ int main(int argc, char **argv)
 	/*
 	 * advertise publisher topics
 	 */
-	ros::Publisher camera_publisher = private_nh.advertise<sensor_msgs::Image>("raw", 2);
+	ros::Publisher camera_publisher = nh.advertise<sensor_msgs::Image>("image_raw", 2);
 	camera_pub = &camera_publisher;
 
+	ros::Publisher camera_info_publisher = nh.advertise<sensor_msgs::CameraInfo>("camera_info", 2);
+	camera_info_pub = &camera_info_publisher;
 
 	/*
 	 * start the camera streaming
@@ -137,6 +149,23 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	/*
+	 * load camera parameters, if calibrated
+	 */
+	if ( !camera_info_url.empty() )
+	{
+		std::string camera_name;
+		bool loaded = camera_calibration_parsers::readCalibration(camera_info_url, camera_name, camera_info_msg);
+		if ( !loaded )
+		{
+			ROS_ERROR("Error reading calibraion file: %s", camera_info_url.c_str());
+		}
+		else
+		{
+			ROS_INFO("Camera parameters loaded from %s:", camera_info_url.c_str());
+			std::cout << camera_info_msg;
+		}
+	}
 
 	/*
 	 * start publishing video frames
