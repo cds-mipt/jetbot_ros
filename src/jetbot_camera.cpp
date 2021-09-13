@@ -29,6 +29,8 @@
 
 #include <jetson-utils/gstCamera.h>
 
+#include <jetson-utils/videoOptions.h>
+
 #include "image_converter.h"
 
 
@@ -97,20 +99,30 @@ int main(int argc, char **argv)
 	 * retrieve parameters
 	 */
 	std::string camera_device = "0";	// MIPI CSI camera by default
+	int width = 1280;
+	int height = 720;
 	int frame_rate = 10;
 	std::string camera_info_url = "";
 
 	private_nh.param<std::string>("device", camera_device, camera_device);
 	private_nh.param<int>("frame_rate", frame_rate, frame_rate);
+	private_nh.param<int>("width", width, width);
+	private_nh.param<int>("height", height, height);
 	private_nh.param<std::string>("camera_info_url", camera_info_url, camera_info_url);
 	
 	ROS_INFO("opening camera device %s", camera_device.c_str());
 
-	
+	videoOptions opt;
+	opt.resource = camera_device;
+	opt.width = width;
+	opt.height = height;
+	opt.frameRate = frame_rate;
+	opt.ioType = videoOptions::INPUT;
+
 	/*
 	 * open camera device
 	 */
-	camera = gstCamera::Create(camera_device.c_str());
+	camera = gstCamera::Create(opt);
 
 	if( !camera )
 	{
