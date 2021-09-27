@@ -92,6 +92,7 @@ sudo apt-get install git cmake
 cd ~/workspace
 git clone https://github.com/dusty-nv/jetson-inference
 cd jetson-inference
+git checkout 99387c24627e71fd93b2451d4b22e7de2e261be2
 git submodule update --init
 
 # build from source
